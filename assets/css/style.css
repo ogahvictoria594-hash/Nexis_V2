@@ -1,0 +1,740 @@
+/* ===================================
+   NEXIS SCHOOL ADMIN - UNIFIED STYLES
+   Login Page + Dashboard + All Pages
+   =================================== */
+
+/* ===================================
+   COLOR VARIABLES
+   =================================== */
+:root {
+    --primary-dark: #0a1a3a;
+    --secondary-dark: #1a2a4a;
+    --sidebar-dark: #0a1a3a;
+    --gold: #d4af37;
+    --gold-hover: #c19d28;
+    --gold-light: rgba(212, 175, 55, 0.1);
+    --text-primary: #0a1a3a;
+    --text-secondary: #6c757d;
+    --text-light: #b8c1d0;
+    --bg-light: #f5f7fa;
+    --bg-white: #ffffff;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --border-color: #dee2e6;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* ===================================
+   RESET & BASE STYLES
+   =================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Body variant for login page */
+body.login-page {
+    min-height: 100vh;
+    background: var(--bg-gradient);
+}
+
+/* Body variant for dashboard pages */
+body.dashboard-page {
+    background-color: var(--bg-light);
+}
+
+/* ===================================
+   SIDEBAR STYLES
+   =================================== */
+
+/* ===================================
+   LOGIN PAGE STYLES
+   =================================== */
+
+.container-fluid {
+    min-height: 100vh;
+    padding: 0;
+}
+
+.row {
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Left Panel - Login Page */
+.left-panel {
+    background: var(--primary-dark);
+    color: white;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+    background: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 24px;
+    color: var(--primary-dark);
+}
+
+.logo-text {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.welcome-section h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.welcome-section p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-light);
+    margin-bottom: 3rem;
+}
+
+.feature-box {
+    background: var(--secondary-dark);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--gold);
+}
+
+.feature-box h3 {
+    color: var(--gold);
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+}
+
+.feature-box p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+/* Right Panel - Login Page */
+.right-panel {
+    background: var(--bg-light);
+    padding: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-form-container {
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 500px;
+}
+
+.login-form-container h2 {
+    color: var(--primary-dark);
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.login-form-container .subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    color: var(--primary-dark);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label i {
+    color: var(--primary-dark);
+}
+
+.form-control, .form-select {
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: white;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.15);
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+}
+
+.password-toggle:hover {
+    color: var(--primary-dark);
+}
+
+.form-check-input:checked {
+    background-color: var(--gold);
+    border-color: var(--gold);
+}
+
+.forgot-password {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    color: var(--gold-hover);
+    text-decoration: underline;
+}
+
+.btn-access {
+    background: var(--gold);
+    color: var(--primary-dark);
+    padding: 0.9rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    width: 100%;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
+}
+
+.btn-access:hover {
+    background: var(--gold-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.btn-access i {
+    margin-left: 0.5rem;
+}
+
+/* ===================================
+   DASHBOARD SIDEBAR STYLES
+   =================================== */
+
+.sidebar {
+    background-color: var(--sidebar-dark);
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 265px;
+    padding: 0;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+    color: var(--gold);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.nav-item {
+    margin-bottom: 0.25rem;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.9rem 1.5rem;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--gold);
+    border-left-color: var(--gold);
+}
+
+.nav-link.active {
+    background-color: rgba(212, 175, 55, 0.1);
+    color: var(--gold);
+    border-left-color: var(--gold);
+    font-weight: 500;
+}
+
+.nav-link i {
+    font-size: 1.2rem;
+    width: 24px;
+    margin-right: 1rem;
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-link {
+    color: var(--gold);
+    padding: 0.9rem 1.5rem;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.logout-link:hover {
+    background-color: rgba(212, 175, 55, 0.1);
+    color: var(--gold-hover);
+}
+
+.logout-link i {
+    font-size: 1.2rem;
+    width: 24px;
+    margin-right: 1rem;
+}
+
+/* ===================================
+   MAIN CONTENT AREA
+   =================================== */
+
+.main-content {
+    margin-left: 265px;
+    padding: 2rem;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    color: var(--text-primary);
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* ===================================
+   STAT CARDS
+   =================================== */
+
+.stat-card {
+    background: var(--bg-white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    height: auto;
+    max-width: 400px;
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-info h3 {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--gold-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--gold);
+}
+
+/* ===================================
+   BUTTONS
+   =================================== */
+
+.btn-primary-custom {
+    background: var(--gold);
+    color: var(--primary-dark);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    background: var(--gold-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.btn-secondary-custom {
+    background: var(--bg-light);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary-custom:hover {
+    background: var(--bg-white);
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+/* ===================================
+   TABLES
+   =================================== */
+
+.table-container {
+    background: var(--bg-white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: var(--bg-light);
+}
+
+/* ===================================
+   FORMS
+   =================================== */
+
+.form-label-custom {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control-custom,
+.form-select-custom {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-light);
+    transition: all 0.3s ease;
+}
+
+.form-control-custom:focus,
+.form-select-custom:focus {
+    background: var(--bg-white);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.15);
+    outline: none;
+}
+
+/* ===================================
+   BADGES
+   =================================== */
+
+.badge-custom {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.badge-success-custom {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-warning-custom {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-danger-custom {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge-info-custom {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* ===================================
+   MOBILE MENU TOGGLE
+   =================================== */
+
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1100;
+    background: var(--gold);
+    color: var(--primary-dark);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+/* Tablet & Mobile - Dashboard */
+@media (max-width: 991px) {
+    .sidebar {
+        left: -265px;
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 5rem 1.5rem 1.5rem;
+    }
+
+    .mobile-menu-toggle {
+        display: block;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    /* Login Page - Tablet */
+    .left-panel {
+        padding: 2rem;
+        min-height: auto;
+    }
+
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+
+    .right-panel {
+        padding: 2rem;
+    }
+
+    .login-form-container {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Dashboard - Mobile */
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .main-content {
+        padding: 5rem 1rem 1rem;
+    }
+
+    /* Login Page - Mobile */
+    .left-panel {
+        text-align: center;
+        padding: 2rem 1.5rem;
+    }
+
+    .logo-section {
+        justify-content: center;
+    }
+
+    .welcome-section h1 {
+        font-size: 1.8rem;
+    }
+
+    .welcome-section p {
+        font-size: 1rem;
+    }
+
+    .right-panel {
+        padding: 1.5rem;
+    }
+
+    .login-form-container {
+        padding: 1.5rem;
+    }
+
+    .login-form-container h2 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 575px) {
+    /* Dashboard - Small Mobile */
+    .sidebar {
+        width: 100%;
+        left: -100%;
+    }
+
+    .stat-card-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    /* Login Page - Small Mobile */
+    .logo-text {
+        font-size: 1.5rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 1.5rem;
+    }
+
+    .feature-box h3 {
+        font-size: 1.1rem;
+    }
+}
+
+/* ===================================
+   UTILITY CLASSES
+   =================================== */
+
+.text-gold {
+    color: var(--gold);
+}
+
+.bg-gold {
+    background-color: var(--gold);
+}
+
+.border-gold {
+    border-color: var(--gold);
+}
+
+.shadow-custom {
+    box-shadow: var(--shadow-md);
+}
+
+.rounded-custom {
+    border-radius: 12px;
+}
+
+.mb-custom {
+    margin-bottom: 2rem;
+}
+
+.mt-custom {
+    margin-top: 2rem;
+}
+
+select[name="f_disc"] {
+    min-width: 120px !important;
+    max-width: 140px;
+}
