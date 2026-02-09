@@ -95,7 +95,12 @@ if (isset($_POST['save_fee_structure'])) {
     if (!$feeModel->feeStructureExists($term, $class_name, $division, $gender, $pdo)) {
         $feeModel->createFeeStructure($term, $class_name, $division, $gender, $amount, $pdo);
     }
+
+     header("Location: fee-management.php");
+    exit;
 }
+
+   
 
 /*
 |--------------------------------------------------------------------------
@@ -109,12 +114,11 @@ if (isset($_POST['save_fee_record'])) {
         $_POST['session'],
         $_POST['term'],
         $_POST['class_name'],
-        $_POST['fee_amount'],
         $_POST['amount_paid'],
         $_POST['date'],
         $_POST['discount'],
         $_POST['method'],
-        $_POST['bank'],
+        $_POST['bank_name'],
         $pdo
     );
     header("Location: fee-management.php");
@@ -126,10 +130,15 @@ $divisions = $pdo->query("SELECT DISTINCT class_arm FROM classes")->fetchAll(PDO
 
 $feeStructures = $feeModel->getAllFeeStructures($pdo);
 
+$feeRecords = []; // default: empty
+
 if (!empty(array_filter($filters))) {
     $feeRecords = $feeModel->getFilteredFeeRecords($filters, $pdo);
-} else {
-    $feeRecords = $feeModel->getAllFeeRecords($pdo);
+}
+
+/* Clear term filter on initial page load */
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($_GET)) {
+    $_GET['term'] = '';
 }
 ?>
 
@@ -202,7 +211,7 @@ if (!empty(array_filter($filters))) {
 <tbody>
 <?php foreach ($feeStructures as $row): ?>
 <tr>
-<td><?= $row['term'] ?></td>
+<td><?= !empty($row['term']) ? $row['term'] : 'Select Term' ?></td>
 <td><?= $row['class_name'] ?></td>
 <td><?= $row['division'] ?></td>
 <td><?= $row['gender'] ?></td>
@@ -241,10 +250,10 @@ href="?delete_structure=<?= $row['id'] ?>">
     </select>
 
     <select name="term" class="form-select-custom">
-        <option value="">Select Term</option>
-        <option value="1st Term" <?= ($_GET['term'] ?? '') == '1st Term' ? 'selected' : '' ?>>1st Term</option>
-        <option value="2nd Term" <?= ($_GET['term'] ?? '') == '2nd Term' ? 'selected' : '' ?>>2nd Term</option>
-        <option value="3rd Term" <?= ($_GET['term'] ?? '') == '3rd Term' ? 'selected' : '' ?>>3rd Term</option>
+       <option value="Select Term" <?= ($_GET['term'] ?? '') == 'Term' ? 'selected' : '' ?>>Select Term</option>
+        <option value="First" <?= ($_GET['term'] ?? '') == 'First' ? 'selected' : '' ?>>First</option>
+        <option value="Second" <?= ($_GET['term'] ?? '') == 'Second' ? 'selected' : '' ?>>Second</option>
+        <option value="Third" <?= ($_GET['term'] ?? '') == 'Third' ? 'selected' : '' ?>>Third</option>
     </select>
 
     <select name="class_name" class="form-select-custom">
@@ -263,6 +272,12 @@ href="?delete_structure=<?= $row['id'] ?>">
         <option value="Bank Deposit" <?= ($_GET['payment_method'] ?? '') == 'Bank Deposit' ? 'selected' : '' ?>>Bank Deposit</option>
     </select>
 
+<select name="status" class="form-select-custom">
+    <option value="">Select Status</option>
+    <option value="Paid" <?= ($_GET['status'] ?? '') == 'Paid' ? 'selected' : '' ?>>Paid</option>
+    <option value="Owing" <?= ($_GET['status'] ?? '') == 'Owing' ? 'selected' : '' ?>>Owing</option>
+</select>
+
     <input type="date" name="date_of_payment" value="<?= $_GET['date_of_payment'] ?? '' ?>" class="form-control-custom">
 
     <button type="submit" class="btn btn-primary btn-sm">Filter</button>
@@ -272,48 +287,59 @@ href="?delete_structure=<?= $row['id'] ?>">
      FEE RECORD TABLE
 ========================= -->
 <table class="table">
-<thead>
-<tr>
-<th>Reg No</th>
-<th>Class</th>
-<th>Amount Paid</th>
-<th>Discount</th>
-<th>Date</th>
-<th>Method</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<?php foreach ($feeRecords as $row): ?>
-<tr>
-<td><?= $row['id'] ?></td>
-<td><?= $row['class_name'] ?></td>
-<td><?= number_format($row['amount_paid']) ?></td>
-<td><?= number_format($row['discount']) ?></td>
-<td><?= $row['date_of_payment'] ?></td>
-<td><?= $row['payment_method'] ?></td>
-<td>
-<button class="btn btn-sm btn-primary-custom me-1"
-onclick='viewData(<?= json_encode($row) ?>,"structure")'>
-    <i class="bi bi-eye"></i> View
-</button>
+    <thead>
+        <tr>
+            <th>Reg No</th>
+            <th>Class</th>
+            <th>Amount Paid</th>
+            <th>Discount</th>
+            <th>Date</th>
+            <th>Method</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php if (!empty($feeRecords)): ?>
+        <?php foreach ($feeRecords as $row): ?>
+            <tr>
+                <!-- Show Reg No but use DB id for actions -->
+                <td><?= htmlspecialchars($row['id']) ?></td>
+                <td><?= htmlspecialchars($row['class_name']) ?></td>
+                <td><?= number_format($row['amount_paid']) ?></td>
+                <td><?= number_format($row['discount']) ?></td>
+                <td><?= htmlspecialchars($row['date_of_payment']) ?></td>
+                <td><?= htmlspecialchars($row['payment_method']) ?></td>
+                <td>
+                    <!-- View button -->
+                    <button class="btn btn-sm btn-primary-custom me-1"
+                        onclick='viewData(<?= json_encode($row) ?>,"record")'>
+                        <i class="bi bi-eye"></i> View
+                    </button>
 
-<button class="btn btn-sm btn-secondary-custom me-1"
-onclick='editStructure(<?= json_encode($row) ?>)'>
-    <i class="bi bi-pencil"></i> Edit
-</button>
+                    <!-- Edit button -->
+                    <button class="btn btn-sm btn-secondary-custom me-1"
+                        onclick='editRecord(<?= json_encode($row) ?>)'>
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
 
-<a class="btn btn-sm btn-danger"
-onclick="return confirm('Delete this fee structure?')"
-href="?delete_structure=<?= $row['id'] ?>">
-    <i class="bi bi-trash"></i> Delete
-</a>
-</td>
-</tr>
-<?php endforeach; ?>
-</tbody>
+                    <!-- Delete button: use DB primary key `id` -->
+                    <a class="btn btn-sm btn-danger"
+                        onclick="return confirm('Delete this fee record?')"
+                        href="?delete_record=<?= $row['id'] ?>">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <tr>
+            <td colspan="7" class="text-center">
+                Select filter options and press "Filter" to view records
+            </td>
+        </tr>
+    <?php endif; ?>
+    </tbody>
 </table>
-
 <!-- =========================
      VIEW MODAL
 ========================= -->
@@ -398,7 +424,7 @@ href="?delete_structure=<?= $row['id'] ?>">
      FEE RECORD MODAL
 ========================= -->
 <div class="modal fade" id="recordModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content stat-card border-0">
             <h3 class="mb-4" style="color: var(--gold);">Fee Record</h3>
 
@@ -422,10 +448,15 @@ href="?delete_structure=<?= $row['id'] ?>">
                         <label>Term</label>
                         <select name="term" class="form-select-custom w-100" required>
                            <option value="">Select Term</option>
-                            <option value="1st Term">1st Term</option>
-                            <option value="2nd Term">2nd Term</option>
-                            <option value="3rd Term">3rd Term</option>
+                            <option value="1st Term">First</option>
+                            <option value="2nd Term">Second</option>
+                            <option value="3rd Term">Third</option>
                                 </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Amount Paid</label>
+                        <input type="number" name="amount_paid" class="form-control-custom w-100" required>
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -443,7 +474,7 @@ href="?delete_structure=<?= $row['id'] ?>">
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label>Division / Arm</label>
+                        <label>Arm</label>
                         <select name="division" class="form-select-custom w-100" required>
                             <option value="">Select Arm</option>
                             <?php foreach ($divisions as $division): ?>
@@ -457,26 +488,21 @@ href="?delete_structure=<?= $row['id'] ?>">
                     </div>
 
                     <div class="col-md-6 mb-3">
-                       <select name="fee_structure" class="form-select-custom w-100" required>
-                        <option value="">Select Fee Structure</option>
+                        <label>Fee Structure</label>
+                        <select name="fee_structure" class="form-select-custom w-100" required>
+                            <option value="">Select Fee Structure</option>
 
-                        <?php foreach ($feeStructures as $structure): ?>
-                            <option value="<?= $structure['id'] ?>">
-                                <?= $structure['term'] ?> |
-                                <?= $structure['class_name'] ?> |
-                                <?= $structure['division'] ?> |
-                                <?= number_format($structure['fee_amount']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                                        </div>
-
-                    <input type="hidden" name="fee_amount" value="0">
-
-                    <div class="col-md-6 mb-3">
-                        <label>Amount Paid</label>
-                        <input type="number" name="amount_paid" class="form-control-custom w-100" required>
+                            <?php foreach ($feeStructures as $structure): ?>
+                                <option value="<?= $structure['id'] ?>">
+                                    <?= $structure['term'] ?> |
+                                    <?= $structure['class_name'] ?> |
+                                    <?= $structure['division'] ?> |
+                                    <?= number_format($structure['fee_amount']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
+
 
                     <div class="col-md-6 mb-3">
                         <label>Discount</label>
@@ -491,15 +517,16 @@ href="?delete_structure=<?= $row['id'] ?>">
                     <div class="col-md-6 mb-3">
                         <label>Method</label>
                         <select name="method" class="form-select-custom w-100" required>
+                            <option value="">Payment Method</option>
                             <option>Cash</option>
                             <option>Transfer</option>
                             <option>Bank Deposit</option>
                         </select>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" id="bankNameContainer" style="display: none;">
                         <label>Bank Name</label>
-                        <input type="text" name="bank" class="form-control-custom w-100">
+                        <input type="text" name="bank_name" class="form-control-custom w-100">
                     </div>
                 </div>
 
@@ -589,6 +616,15 @@ function editRecord(data) {
 
     recordModal.show();
 }
+
+document.querySelector('select[name="method"]').addEventListener('change', function() {
+    const bankNameContainer = document.getElementById('bankNameContainer');
+    if (['Cash', 'Transfer', 'Bank Deposit'].includes(this.value)) {
+        bankNameContainer.style.display = 'block';
+    } else {
+        bankNameContainer.style.display = 'none';
+    }
+});
 </script>
 
 </body>

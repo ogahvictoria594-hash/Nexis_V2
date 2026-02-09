@@ -82,11 +82,11 @@ class Fee {
     }
 
     // Create Fee Record
-    function createFeeRecord($id, $session, $term, $class_name, $fee_amount, $amount_paid, $date_of_payment, $discount, $payment_method, $bank, $pdo) {
-        $sql = "INSERT INTO fee_records (id, session, term, class_name, fee_amount, amount_paid, date_of_payment, discount, payment_method, bank)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    function createFeeRecord($id, $session, $term, $class_name, $amount_paid, $date_of_payment, $discount, $payment_method, $bank, $pdo) {
+        $sql = "INSERT INTO fee_records (id, session, term, class_name, amount_paid, date_of_payment, discount, payment_method, bank)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute([$id, $session, $term, $class_name, $fee_amount, $amount_paid, $date_of_payment, $discount, $payment_method, $bank]);
+        return $stmt->execute([$id, $session, $term, $class_name, $amount_paid, $date_of_payment, $discount, $payment_method, $bank]);
     }
 
     // Get all fee records
@@ -98,10 +98,10 @@ class Fee {
     }
 
     // Edit Fee Record by ID
-    function editFeeRecordById($id, $session, $term, $class_name, $fee_amount, $amount_paid, $date_of_payment, $discount, $payment_method, $bank, $pdo) {
-        $sql = "UPDATE fee_records SET session = ?, term = ?, class_name = ?, fee_amount = ?, amount_paid = ?, date_of_payment = ?, discount = ?, payment_method = ?, bank = ? WHERE id = ?";
+    function editFeeRecordById($id, $session, $term, $class_name, $amount_paid, $date_of_payment, $discount, $payment_method, $bank, $pdo) {
+        $sql = "UPDATE fee_records SET id =?, session = ?, term = ?, class_name = ?, amount_paid = ?, date_of_payment = ?, discount = ?, payment_method = ?, bank = ? WHERE id = ?";
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute([$session, $term, $class_name, $fee_amount, $amount_paid, $date_of_payment, $discount, $payment_method, $bank, $id]);
+        return $stmt->execute([$session, $term, $class_name, $amount_paid, $date_of_payment, $discount, $payment_method, $bank_name, $id]);
     }
 
     // Delete fee record by ID
@@ -131,46 +131,113 @@ class Fee {
 
     public function getFilteredFeeRecords($filters, $pdo)
 {
-    $sql = "SELECT * FROM fee_records WHERE 1=1";
+    $sql = "SELECT fr.*, fs.fee_amount 
+            FROM fee_records fr 
+            LEFT JOIN fee_structure fs 
+            ON fr.term = fs.term 
+            AND fr.class_name = fs.class_name";
     $params = [];
 
     if (!empty($filters['session'])) {
-        $sql .= " AND session = ?";
+        $sql .= " AND fr.session = ?";
         $params[] = $filters['session'];
     }
 
     if (!empty($filters['term'])) {
-        $sql .= " AND term = ?";
+        $sql .= " AND fr.term = ?";
         $params[] = $filters['term'];
     }
 
     if (!empty($filters['class_name'])) {
-        $sql .= " AND class_name = ?";
+        $sql .= " AND fr.class_name = ?";
         $params[] = $filters['class_name'];
     }
 
     if (!empty($filters['payment_method'])) {
-        $sql .= " AND payment_method = ?";
+        $sql .= " AND fr.payment_method = ?";
         $params[] = $filters['payment_method'];
     }
 
-    if (!empty($filters['status'])) {  // Only check if key exists
-        if ($filters['status'] == 'Paid') {
-            $sql .= " AND amount_paid >= fee_amount";
-        } else {
-            $sql .= " AND amount_paid < fee_amount";
-        }
+    if (!empty($filters['date_of_payment'])) {
+        $sql .= " AND fr.date_of_payment = ?";
+        $params[] = $filters['date_of_payment'];
     }
 
-    if (!empty($filters['date_of_payment'])) { // match your filter key
-        $sql .= " AND date_of_payment = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Compute status dynamically
+    if (!empty($filters['status'])) {
+        $records = array_filter($records, function($row) use ($filters) {
+            $status = $row['amount_paid'] >= $row['fee_amount'] ? 'Paid' : 'Owing';
+            return $status === $filters['status'];
+        });
+    }
+
+    return $records;
+}
+
+public function getFilteredFeeRecordsWithStatus($filters, $pdo)
+{
+    $sql = "
+        SELECT fr.*, fs.fee_amount
+        FROM fee_records fr
+        LEFT JOIN fee_structure fs
+            ON fr.term = fs.term
+            AND fr.class_name = fs.class_name
+            AND fr.division = fs.division
+        WHERE 1=1
+    ";
+
+    $params = [];
+
+    // Regular filters
+    if (!empty($filters['session'])) {
+        $sql .= " AND fr.session = ?";
+        $params[] = $filters['session'];
+    }
+
+    if (!empty($filters['term'])) {
+        $sql .= " AND fr.term = ?";
+        $params[] = $filters['term'];
+    }
+
+    if (!empty($filters['class_name'])) {
+        $sql .= " AND fr.class_name = ?";
+        $params[] = $filters['class_name'];
+    }
+
+    if (!empty($filters['payment_method'])) {
+        $sql .= " AND fr.payment_method = ?";
+        $params[] = $filters['payment_method'];
+    }
+
+    if (!empty($filters['date_of_payment'])) {
+        $sql .= " AND fr.date_of_payment = ?";
         $params[] = $filters['date_of_payment'];
     }
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
 
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Filter by status if requested
+    if (!empty($filters['status'])) {
+        $status = strtolower($filters['status']);
+        $records = array_filter($records, function($r) use ($status) {
+            $totalPayable = $r['fee_amount'] - $r['discount'];
+            if ($status === 'paid') {
+                return $r['amount_paid'] >= $totalPayable;
+            } elseif ($status === 'owing') {
+                return $r['amount_paid'] < $totalPayable;
+            }
+            return true;
+        });
+    }
+
+    return $records;
 }
 }
 ?>
