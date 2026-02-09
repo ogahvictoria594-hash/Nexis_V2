@@ -35,6 +35,36 @@ class Fee {
         return $stmt->rowCount() > 0;
     }
 
+    public function updateFeeStructure($id, $term, $class_name, $division, $gender, $amount, $pdo)
+{
+    $sql = "
+        UPDATE fee_structure
+        SET term = ?, 
+            class_name = ?, 
+            division = ?, 
+            gender = ?, 
+            fee_amount = ?
+        WHERE id = ?
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $term,
+        $class_name,
+        $division,
+        $gender,
+        $amount,
+        $id
+    ]);
+}
+
+    public function deleteFeeStructure($id, $pdo)
+{
+    $sql = "DELETE FROM fee_structure WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+}
+
     // Get all Fee Structures
     function getAllFeeStructures($pdo) {
         $sql = "SELECT * FROM fee_structure ORDER BY id DESC";
@@ -98,5 +128,49 @@ class Fee {
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getFilteredFeeRecords($filters, $pdo)
+{
+    $sql = "SELECT * FROM fee_records WHERE 1=1";
+    $params = [];
+
+    if (!empty($filters['session'])) {
+        $sql .= " AND session = ?";
+        $params[] = $filters['session'];
+    }
+
+    if (!empty($filters['term'])) {
+        $sql .= " AND term = ?";
+        $params[] = $filters['term'];
+    }
+
+    if (!empty($filters['class_name'])) {
+        $sql .= " AND class_name = ?";
+        $params[] = $filters['class_name'];
+    }
+
+    if (!empty($filters['payment_method'])) {
+        $sql .= " AND payment_method = ?";
+        $params[] = $filters['payment_method'];
+    }
+
+    if (!empty($filters['status'])) {  // Only check if key exists
+        if ($filters['status'] == 'Paid') {
+            $sql .= " AND amount_paid >= fee_amount";
+        } else {
+            $sql .= " AND amount_paid < fee_amount";
+        }
+    }
+
+    if (!empty($filters['date_of_payment'])) { // match your filter key
+        $sql .= " AND date_of_payment = ?";
+        $params[] = $filters['date_of_payment'];
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }
 ?>

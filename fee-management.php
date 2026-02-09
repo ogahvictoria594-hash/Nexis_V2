@@ -7,6 +7,80 @@ $feeModel = new Fee();
 
 /*
 |--------------------------------------------------------------------------
+| CAPTURE FILTER INPUTS
+|--------------------------------------------------------------------------
+*/
+$filters = [
+    'session'          => $_GET['session'] ?? '',
+    'term'             => $_GET['term'] ?? '',
+    'class_name'       => $_GET['class_name'] ?? '',
+    'payment_method'   => $_GET['payment_method'] ?? '',
+    'date_of_payment'  => $_GET['date_of_payment'] ?? ''
+];
+
+$feeStructures = $feeModel->getAllFeeStructures($pdo);
+
+if (!empty(array_filter($filters))) {
+    $feeRecords = $feeModel->getFeeRecordsByFilter($filters, $pdo);
+} else {
+    $feeRecords = $feeModel->getAllFeeRecords($pdo);
+}
+
+/*
+|--------------------------------------------------------------------------
+| DELETE ACTIONS
+|--------------------------------------------------------------------------
+*/
+if (isset($_GET['delete_structure'])) {
+    $feeModel->deleteFeeStructure($_GET['delete_structure'], $pdo);
+    header("Location: fee-management.php");
+    exit;
+}
+
+if (isset($_GET['delete_record'])) {
+    $feeModel->deleteFeeRecordById($_GET['delete_record'], $pdo);
+    header("Location: fee-management.php");
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE FEE STRUCTURE
+|--------------------------------------------------------------------------
+*/
+if (isset($_POST['update_fee_structure'])) {
+    $feeModel->updateFeeStructure(
+        $_POST['structure_id'],
+        $_POST['term'],
+        $_POST['class_name'],
+        $_POST['division'],
+        $_POST['gender'],
+        $_POST['amount'],
+        $pdo
+    );
+    header("Location: fee-management.php");
+exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE FEE RECORD
+|--------------------------------------------------------------------------
+*/
+if (isset($_POST['update_fee_record'])) {
+    $feeModel->updateFeeRecord(
+        $_POST['record_id'],
+        $_POST['amount_paid'],
+        $_POST['discount'],
+        $_POST['method'],
+        $_POST['bank'],
+        $pdo
+    );
+    
+}
+
+/*
+|--------------------------------------------------------------------------
 | HANDLE FEE STRUCTURE SAVE
 |--------------------------------------------------------------------------
 */
@@ -30,30 +104,32 @@ if (isset($_POST['save_fee_structure'])) {
 */
 if (isset($_POST['save_fee_record'])) {
 
-    $reg_no      = $_POST['reg_no'];
-    $session     = $_POST['session'];
-    $term        = $_POST['term'];
-    $class_name  = $_POST['class_name'];
-    $fee_amount  = $_POST['fee_amount'];
-    $amount_paid = $_POST['amount_paid'];
-    $discount    = $_POST['discount'];
-    $date        = $_POST['date'];
-    $method      = $_POST['method'];
-    $bank        = $_POST['bank'];
-
     $feeModel->createFeeRecord(
-        $reg_no,
-        $session,
-        $term,
-        $class_name,
-        $fee_amount,
-        $amount_paid,
-        $date,
-        $discount,
-        $method,
-        $bank,
+        $_POST['reg_no'],
+        $_POST['session'],
+        $_POST['term'],
+        $_POST['class_name'],
+        $_POST['fee_amount'],
+        $_POST['amount_paid'],
+        $_POST['date'],
+        $_POST['discount'],
+        $_POST['method'],
+        $_POST['bank'],
         $pdo
     );
+    header("Location: fee-management.php");
+exit;
+}
+
+$classes   = $pdo->query("SELECT DISTINCT class_name FROM classes")->fetchAll(PDO::FETCH_ASSOC);
+$divisions = $pdo->query("SELECT DISTINCT class_arm FROM classes")->fetchAll(PDO::FETCH_ASSOC);
+
+$feeStructures = $feeModel->getAllFeeStructures($pdo);
+
+if (!empty(array_filter($filters))) {
+    $feeRecords = $feeModel->getFilteredFeeRecords($filters, $pdo);
+} else {
+    $feeRecords = $feeModel->getAllFeeRecords($pdo);
 }
 ?>
 
@@ -65,8 +141,7 @@ if (isset($_POST['save_fee_record'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <link rel="stylesheet" href="assets/css/style.css">
 
 <style>
@@ -96,10 +171,9 @@ if (isset($_POST['save_fee_record'])) {
 </head>
 
 <body class="dashboard-page">
-
 <?php include "components/SideBar.php"; ?>
 
-<main class="main-content" id="mainContent">
+<main class="main-content">
 
 <div class="page-header d-flex justify-content-between align-items-center mb-4">
     <h1 class="page-title">Fee Management</h1>
@@ -113,93 +187,143 @@ if (isset($_POST['save_fee_record'])) {
      FEE STRUCTURES TABLE
 ========================= -->
 <div class="table-container mb-4">
-    <h3 class="mb-3">Fee Structures</h3>
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Term</th>
-                    <th>Class</th>
-                    <th>Division</th>
-                    <th>Gender</th>
-                    <th>Amount</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+<h3 class="mb-3">Fee Structures</h3>
+<table class="table">
+<thead>
+<tr>
+<th>Term</th>
+<th>Class</th>
+<th>Division</th>
+<th>Gender</th>
+<th>Amount</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<?php foreach ($feeStructures as $row): ?>
+<tr>
+<td><?= $row['term'] ?></td>
+<td><?= $row['class_name'] ?></td>
+<td><?= $row['division'] ?></td>
+<td><?= $row['gender'] ?></td>
+<td><?= number_format($row['fee_amount']) ?></td>
+<td>
+<button class="btn btn-sm btn-primary-custom me-1"
+onclick='viewData(<?= json_encode($row) ?>,"structure")'>
+    <i class="bi bi-eye"></i> View
+</button>
+
+<button class="btn btn-sm btn-secondary-custom me-1"
+onclick='editStructure(<?= json_encode($row) ?>)'>
+    <i class="bi bi-pencil"></i> Edit
+</button>
+
+<a class="btn btn-sm btn-danger"
+onclick="return confirm('Delete this fee structure?')"
+href="?delete_structure=<?= $row['id'] ?>">
+    <i class="bi bi-trash"></i> Delete
+</a>
+</td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
 </div>
 
 <!-- =========================
-     FILTER FORM
+     FEE RECORD FILTERS
 ========================= -->
-<form class="filter-scroll-container">
-    <select class="form-select-custom">
-        <option value="">Session</option>
-        <option>2024/2025</option>
-        <option>2025/2026</option>
+<form class="filter-scroll-container" method="GET">
+    <select name="session" class="form-select-custom">
+        <option value="">Select Session</option>
+        <option value="2024/2025" <?= ($_GET['session'] ?? '') == '2024/2025' ? 'selected' : '' ?>>2024/2025</option>
+        <option value="2025/2026" <?= ($_GET['session'] ?? '') == '2025/2026' ? 'selected' : '' ?>>2025/2026</option>
     </select>
 
-    <select class="form-select-custom">
-        <option value="">Term</option>
-        <option>1st Term</option>
-        <option>2nd Term</option>
-        <option>3rd Term</option>
+    <select name="term" class="form-select-custom">
+        <option value="">Select Term</option>
+        <option value="1st Term" <?= ($_GET['term'] ?? '') == '1st Term' ? 'selected' : '' ?>>1st Term</option>
+        <option value="2nd Term" <?= ($_GET['term'] ?? '') == '2nd Term' ? 'selected' : '' ?>>2nd Term</option>
+        <option value="3rd Term" <?= ($_GET['term'] ?? '') == '3rd Term' ? 'selected' : '' ?>>3rd Term</option>
     </select>
 
-    <select class="form-select-custom">
-        <option value="">Class</option>
-        <option>Primary 1</option>
-        <option>JSS1</option>
-        <option>JSS2</option>
-        <option>JSS3</option>
-        <option>SS1</option>
-        <option>SS2</option>
-        <option>Nursery 1</option>
-        <option>Nursery 2</option>
+    <select name="class_name" class="form-select-custom">
+        <option value="">Select Class</option>
+        <?php foreach ($classes as $class): ?>
+            <option value="<?= $class['class_name'] ?>" <?= ($_GET['class_name'] ?? '') == $class['class_name'] ? 'selected' : '' ?>>
+                <?= $class['class_name'] ?>
+            </option>
+        <?php endforeach; ?>
     </select>
 
-    <select class="form-select-custom">
-        <option value="">Method</option>
-        <option>Cash</option>
-        <option>Transfer</option>
-        <option>Bank Deposit</option>
+    <select name="payment_method" class="form-select-custom">
+        <option value="">Select Payment Method</option>
+        <option value="Cash" <?= ($_GET['payment_method'] ?? '') == 'Cash' ? 'selected' : '' ?>>Cash</option>
+        <option value="Transfer" <?= ($_GET['payment_method'] ?? '') == 'Transfer' ? 'selected' : '' ?>>Transfer</option>
+        <option value="Bank Deposit" <?= ($_GET['payment_method'] ?? '') == 'Bank Deposit' ? 'selected' : '' ?>>Bank Deposit</option>
     </select>
 
-    <select class="form-select-custom">
-        <option value="">Status</option>
-        <option>Paid</option>
-        <option>Partial</option>
-    </select>
+    <input type="date" name="date_of_payment" value="<?= $_GET['date_of_payment'] ?? '' ?>" class="form-control-custom">
 
-    <input type="date" class="form-control-custom">
-
-    <button type="submit" class="btn-primary-custom">Filter</button>
-    <button type="reset" class="btn btn-sm btn-light">Reset</button>
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
 </form>
 
 <!-- =========================
      FEE RECORD TABLE
 ========================= -->
-<div class="table-responsive mt-4">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Reg No</th>
-                <th>Class</th>
-                <th>Amount Paid</th>
-                <th>Discount</th>
-                <th>Date</th>
-                <th>Method</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
+<table class="table">
+<thead>
+<tr>
+<th>Reg No</th>
+<th>Class</th>
+<th>Amount Paid</th>
+<th>Discount</th>
+<th>Date</th>
+<th>Method</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<?php foreach ($feeRecords as $row): ?>
+<tr>
+<td><?= $row['id'] ?></td>
+<td><?= $row['class_name'] ?></td>
+<td><?= number_format($row['amount_paid']) ?></td>
+<td><?= number_format($row['discount']) ?></td>
+<td><?= $row['date_of_payment'] ?></td>
+<td><?= $row['payment_method'] ?></td>
+<td>
+<button class="btn btn-sm btn-primary-custom me-1"
+onclick='viewData(<?= json_encode($row) ?>,"structure")'>
+    <i class="bi bi-eye"></i> View
+</button>
+
+<button class="btn btn-sm btn-secondary-custom me-1"
+onclick='editStructure(<?= json_encode($row) ?>)'>
+    <i class="bi bi-pencil"></i> Edit
+</button>
+
+<a class="btn btn-sm btn-danger"
+onclick="return confirm('Delete this fee structure?')"
+href="?delete_structure=<?= $row['id'] ?>">
+    <i class="bi bi-trash"></i> Delete
+</a>
+</td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
 
 <!-- =========================
+     VIEW MODAL
+========================= -->
+<div class="modal fade" id="viewModal">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content stat-card p-4" id="viewModalBody"></div>
+</div>
+</div>
+
+ <!-- =========================
      FEE SETUP MODAL
 ========================= -->
 <div class="modal fade" id="setupModal" tabindex="-1">
@@ -222,14 +346,13 @@ if (isset($_POST['save_fee_record'])) {
                     <label>Class</label>
                     <select name="class_name" class="form-select-custom w-100" required>
                         <option value="">Select Class</option>
-                        <option>Primary 1</option>
-                        <option>JSS1</option>
-                        <option>JSS2</option>
-                        <option>JSS3</option>
-                        <option>SS1</option>
-                        <option>SS2</option>
-                        <option>Nursery 1</option>
-                        <option>Nursery 2</option>
+                        <?php foreach ($classes as $class): ?>
+                            <?php if (!empty($class['class_name'])): ?>
+                                <option value="<?= htmlspecialchars($class['class_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars($class['class_name'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -237,10 +360,13 @@ if (isset($_POST['save_fee_record'])) {
                     <label>Division / Arm</label>
                     <select name="division" class="form-select-custom w-100" required>
                         <option value="">Select Arm</option>
-                        <option>A, B, C</option>
-                        <option>A, B, C, D</option>
-                        <option>A, B, C, D, E</option>
-                        <option>A, B</option>
+                        <?php foreach ($divisions as $division): ?>
+                            <?php if (!empty($division['class_arm'])): ?>
+                                <option value="<?= htmlspecialchars($division['class_arm'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars($division['class_arm'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -295,23 +421,55 @@ if (isset($_POST['save_fee_record'])) {
                     <div class="col-md-6 mb-3">
                         <label>Term</label>
                         <select name="term" class="form-select-custom w-100" required>
-                            <option>1st Term</option>
-                            <option>2nd Term</option>
-                            <option>3rd Term</option>
-                        </select>
+                           <option value="">Select Term</option>
+                            <option value="1st Term">1st Term</option>
+                            <option value="2nd Term">2nd Term</option>
+                            <option value="3rd Term">3rd Term</option>
+                                </select>
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label>Class</label>
                         <select name="class_name" class="form-select-custom w-100" required>
-                            <option>Primary 1</option>
-                            <option>JSS1</option>
-                            <option>JSS2</option>
-                            <option>JSS3</option>
-                            <option>SS1</option>
-                            <option>SS2</option>
+                            <option value="">Select Class</option>
+                            <?php foreach ($classes as $class): ?>
+                                <?php if (!empty($class['class_name'])): ?>
+                                    <option value="<?= htmlspecialchars($class['class_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= htmlspecialchars($class['class_name'], ENT_QUOTES, 'UTF-8') ?>
+                                    </option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
                         </select>
                     </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Division / Arm</label>
+                        <select name="division" class="form-select-custom w-100" required>
+                            <option value="">Select Arm</option>
+                            <?php foreach ($divisions as $division): ?>
+    <?php if (!empty($division['class_arm'])): ?>
+        <option value="<?= htmlspecialchars($division['class_arm'], ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars($division['class_arm'], ENT_QUOTES, 'UTF-8') ?>
+        </option>
+    <?php endif; ?>
+<?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                       <select name="fee_structure" class="form-select-custom w-100" required>
+                        <option value="">Select Fee Structure</option>
+
+                        <?php foreach ($feeStructures as $structure): ?>
+                            <option value="<?= $structure['id'] ?>">
+                                <?= $structure['term'] ?> |
+                                <?= $structure['class_name'] ?> |
+                                <?= $structure['division'] ?> |
+                                <?= number_format($structure['fee_amount']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                                        </div>
 
                     <input type="hidden" name="fee_amount" value="0">
 
@@ -354,20 +512,90 @@ if (isset($_POST['save_fee_record'])) {
     </div>
 </div>
 
+</main>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-var setupModal = new bootstrap.Modal(document.getElementById('setupModal'));
-document.getElementById('openSetupBtn').addEventListener('click', function () {
+var setupModal  = new bootstrap.Modal(document.getElementById('setupModal'));
+var recordModal = new bootstrap.Modal(document.getElementById('recordModal'));
+var viewModal   = new bootstrap.Modal(document.getElementById('viewModal'));
+
+// === Connect top buttons to modals ===
+document.getElementById('openSetupBtn').addEventListener('click', function() {
     setupModal.show();
 });
 
-var recordModal = new bootstrap.Modal(document.getElementById('recordModal'));
-document.getElementById('openRecordBtn').addEventListener('click', function () {
+document.getElementById('openRecordBtn').addEventListener('click', function() {
     recordModal.show();
 });
+
+function viewData(data, type) {
+    let html = '<h4 class="mb-3">Details</h4>';
+    for (const key in data) {
+        html += `<p><strong>${key}</strong>: ${data[key]}</p>`;
+    }
+    document.getElementById('viewModalBody').innerHTML = html;
+    viewModal.show();
+}
+
+function editStructure(data) {
+    document.querySelector('#setupModal [name="term"]').value = data.term;
+    document.querySelector('#setupModal [name="class_name"]').value = data.class_name;
+    document.querySelector('#setupModal [name="division"]').value = data.division;
+    document.querySelector('#setupModal [name="gender"]').value = data.gender;
+    document.querySelector('#setupModal [name="amount"]').value = data.amount;
+
+    let idInput = document.createElement('input');
+    idInput.type = 'hidden';
+    idInput.name = 'structure_id';
+    idInput.value = data.id;
+
+    let flag = document.createElement('input');
+    flag.type = 'hidden';
+    flag.name = 'update_fee_structure';
+    flag.value = 1;
+
+    let form = document.querySelector('#setupModal form');
+    form.appendChild(idInput);
+    form.appendChild(flag);
+
+    setupModal.show();
+}
+
+function editRecord(data) {
+    document.querySelector('#recordModal [name="reg_no"]').value = data.reg_no;
+    document.querySelector('#recordModal [name="session"]').value = data.session;
+    document.querySelector('#recordModal [name="term"]').value = data.term;
+    document.querySelector('#recordModal [name="class_name"]').value = data.class_name;
+    document.querySelector('#recordModal [name="amount_paid"]').value = data.amount_paid;
+    document.querySelector('#recordModal [name="discount"]').value = data.discount;
+    document.querySelector('#recordModal [name="method"]').value = data.method;
+    document.querySelector('#recordModal [name="bank"]').value = data.bank;
+
+    let idInput = document.createElement('input');
+    idInput.type = 'hidden';
+    idInput.name = 'record_id';
+    idInput.value = data.id;
+
+    let flag = document.createElement('input');
+    flag.type = 'hidden';
+    flag.name = 'update_fee_record';
+    flag.value = 1;
+
+    let form = document.querySelector('#recordModal form');
+    form.appendChild(idInput);
+    form.appendChild(flag);
+
+    recordModal.show();
+}
 </script>
 
-</main>
 </body>
 </html>
+
+
+
+
+
+
